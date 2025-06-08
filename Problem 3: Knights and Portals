@@ -1,0 +1,89 @@
+#include <stdio.h>
+#include <stdlib.h>
+#define MAX 50
+
+typedef struct {
+    int x, y, dist, usedTeleport;
+} Node;
+
+int dx[] = {1, -1, 0, 0};
+int dy[] = {0, 0, 1, -1};
+
+Node queue[MAX * MAX * 2];
+int front = 0, rear = 0;
+
+void enqueue(Node node) {
+    queue[rear++] = node;
+}
+
+Node dequeue() {
+    return queue[front++];
+}
+
+int isValid(int x, int y, int n, int m, int grid[MAX][MAX]) {
+    return x >= 0 && y >= 0 && x < n && y < m && grid[x][y] == 0;
+}
+
+int bfs(int grid[MAX][MAX], int n, int m) {
+    int visited[MAX][MAX][2] = {0};
+
+    Node start = {0, 0, 0, 0};
+    enqueue(start);
+    visited[0][0][0] = 1;
+
+    Node empties[MAX * MAX];
+    int emptyCount = 0;
+
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < m; j++)
+            if (grid[i][j] == 0)
+                empties[emptyCount++] = (Node){i, j, 0, 0};
+
+    while (front < rear) {
+        Node cur = dequeue();
+
+        if (cur.x == n - 1 && cur.y == m - 1)
+            return cur.dist;
+
+        for (int i = 0; i < 4; i++) {
+            int nx = cur.x + dx[i];
+            int ny = cur.y + dy[i];
+
+            if (isValid(nx, ny, n, m, grid) && !visited[nx][ny][cur.usedTeleport]) {
+                visited[nx][ny][cur.usedTeleport] = 1;
+                enqueue((Node){nx, ny, cur.dist + 1, cur.usedTeleport});
+            }
+        }
+
+        if (cur.usedTeleport == 0 && cur.dist > 1) {
+            for (int i = 0; i < emptyCount; i++) {
+                Node t = empties[i];
+                if ((t.x != cur.x || t.y != cur.y) && !visited[t.x][t.y][1]) {
+                    visited[t.x][t.y][1] = 1;
+                    enqueue((Node){t.x, t.y, cur.dist + 1, 1});
+                }
+            }
+        }
+    }
+
+    return -1;
+}
+
+int main() {
+    int grid[MAX][MAX], n, m;
+    printf("Enter rows and columns: ");
+    scanf("%d %d", &n, &m);
+
+    printf("Enter grid (0 = empty, 1 = wall):\n");
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < m; j++)
+            scanf("%d", &grid[i][j]);
+
+    int result = bfs(grid, n, m);
+    if (result != -1)
+        printf("Shortest path with one teleport: %d\n", result);
+    else
+        printf("No path found\n");
+
+    return 0;
+}

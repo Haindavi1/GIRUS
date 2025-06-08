@@ -1,0 +1,43 @@
+#include <stdio.h>
+
+int getNext(int n) {
+    int c = n;
+    int count0 = 0;
+    int count1 = 0;
+
+    while (((c & 1) == 0) && (c != 0)) {
+        count0++;
+        c >>= 1;
+    }
+
+    while ((c & 1) == 1) {
+        count1++;
+        c >>= 1;
+    }
+
+    if (count0 + count1 == 31 || count0 + count1 == 0)
+        return -1;
+
+    int p = count0 + count1;
+
+    n |= (1 << p);
+    n &= ~((1 << p) - 1);
+    n |= (1 << (count1 - 1)) - 1;
+
+    return n;
+}
+
+int main() {
+    int n;
+    printf("Enter an integer: ");
+    scanf("%d", &n);
+
+    int result = getNext(n);
+
+    if (result == -1)
+        printf("No larger number with the same number of 1s exists.\n");
+    else
+        printf("Next larger integer with same number of 1s: %d\n", result);
+
+    return 0;
+}

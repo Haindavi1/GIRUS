@@ -1,55 +1,58 @@
 #include <stdio.h>
 #include <string.h>
-#define SIZE 26
+
 #define MAX_WORDS 100
 #define MAX_LEN 100
-int graph[SIZE][SIZE];
-int inDegree[SIZE];
-int used[SIZE];
-char order[SIZE];
-int front = 0, back = 0;
-void insertEdge(char a, char b) {
-    int u = a - 'a';
-    int v = b - 'a';
-    if (graph[u][v] == 0) {
-        graph[u][v] = 1;
-        inDegree[v]++;
+#define ALPHABET 26
+
+int connections[ALPHABET][ALPHABET];
+int countBefore[ALPHABET];
+int seen[ALPHABET];
+char finalOrder[ALPHABET];
+int start = 0, end = 0;
+
+void addRelation(char first, char second) {
+    int x = first - 'a';
+    int y = second - 'a';
+    if (connections[x][y] == 0) {
+        connections[x][y] = 1;
+        countBefore[y]++;
     }
 }
 
-void findOrder() {
-    int queue[SIZE];
-    for (int i = 0; i < SIZE; i++) {
-        if (used[i] == 1 && inDegree[i] == 0) {
-            queue[back++] = i;
+void getOrder() {
+    int q[ALPHABET];
+    for (int i = 0; i < ALPHABET; i++) {
+        if (seen[i] && countBefore[i] == 0) {
+            q[end++] = i;
         }
     }
 
-    int index = 0;
-    while (front < back) {
-        int curr = queue[front++];
-        order[index++] = curr + 'a';
+    int pos = 0;
+    while (start < end) {
+        int curr = q[start++];
+        finalOrder[pos++] = curr + 'a';
 
-        for (int j = 0; j < SIZE; j++) {
-            if (graph[curr][j]) {
-                inDegree[j]--;
-                if (inDegree[j] == 0) {
-                    queue[back++] = j;
+        for (int i = 0; i < ALPHABET; i++) {
+            if (connections[curr][i]) {
+                countBefore[i]--;
+                if (countBefore[i] == 0) {
+                    q[end++] = i;
                 }
             }
         }
     }
 
-    int totalUsed = 0;
-    for (int i = 0; i < SIZE; i++) {
-        if (used[i]) totalUsed++;
+    int totalLetters = 0;
+    for (int i = 0; i < ALPHABET; i++) {
+        if (seen[i]) totalLetters++;
     }
 
-    if (index < totalUsed) {
-        printf("No valid order. There's a cycle.\n");
+    if (pos < totalLetters) {
+        printf("No valid character order (cycle found).\n");
     } else {
-        order[index] = '\0';
-        printf("The character order is: %s\n", order);
+        finalOrder[pos] = '\0';
+        printf("Character order: %s\n", finalOrder);
     }
 }
 
@@ -57,33 +60,31 @@ int main() {
     int n;
     char words[MAX_WORDS][MAX_LEN];
 
-    printf("Enter number of words: ");
+    printf("How many words? ");
     scanf("%d", &n);
 
     printf("Enter the words:\n");
     for (int i = 0; i < n; i++) {
         scanf("%s", words[i]);
         for (int j = 0; words[i][j]; j++) {
-            used[words[i][j] - 'a'] = 1;
+            seen[words[i][j] - 'a'] = 1;
         }
     }
 
     for (int i = 0; i < n - 1; i++) {
         char *w1 = words[i];
         char *w2 = words[i + 1];
-        int len1 = strlen(w1);
-        int len2 = strlen(w2);
-        int minLen = len1 < len2 ? len1 : len2;
+        int len = strlen(w1) < strlen(w2) ? strlen(w1) : strlen(w2);
 
-        for (int j = 0; j < minLen; j++) {
+        for (int j = 0; j < len; j++) {
             if (w1[j] != w2[j]) {
-                insertEdge(w1[j], w2[j]);
+                addRelation(w1[j], w2[j]);
                 break;
             }
         }
     }
 
-    findOrder();
+    getOrder();
 
     return 0;
 }
